@@ -1,0 +1,129 @@
+<!--
+  widget.html — de chatbubbel voor op de website
+  Plak dit in WordPress in een "Aangepaste HTML"-blok (of in een HTML-widget).
+  Vervang hieronder BACKEND_URL door het adres van je serverless functie.
+  Let op: hier staat GEEN API-sleutel. Die blijft veilig in de backend.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Mulish:wght@400;600&display=swap" rel="stylesheet">
+
+<style>
+  #fcf-chat * { box-sizing: border-box; font-family: "Mulish", sans-serif; }
+  #fcf-chat { position: fixed; bottom: 24px; right: 24px; z-index: 99999; }
+
+  #fcf-toggle {
+    width: 60px; height: 60px; border: none; border-radius: 50%;
+    background: #C8F135; color: #15161A; font-size: 26px; cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,.25); transition: transform .15s;
+  }
+  #fcf-toggle:hover { transform: scale(1.06); }
+
+  #fcf-panel {
+    display: none; flex-direction: column; width: 360px; max-width: calc(100vw - 32px);
+    height: 520px; max-height: calc(100vh - 120px); margin-bottom: 14px;
+    background: #fff; border-radius: 18px; overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,.28);
+  }
+  #fcf-panel.open { display: flex; }
+
+  #fcf-head { background: #15161A; padding: 16px 18px; }
+  #fcf-head h3 { margin: 0; color: #C8F135; font-family: "Anton", sans-serif;
+    font-size: 20px; letter-spacing: .5px; text-transform: uppercase; }
+  #fcf-head p { margin: 2px 0 0; color: #9a9b94; font-size: 12px; }
+
+  #fcf-msgs { flex: 1; padding: 16px; overflow-y: auto; background: #fafaf8; }
+  .fcf-msg { max-width: 80%; padding: 10px 13px; border-radius: 14px;
+    margin-bottom: 10px; font-size: 14px; line-height: 1.45; white-space: pre-wrap; }
+  .fcf-bot  { background: #f0f0ec; color: #1c1c1a; border-bottom-left-radius: 4px; }
+  .fcf-user { background: #C8F135; color: #15161A; margin-left: auto;
+    border-bottom-right-radius: 4px; }
+
+  #fcf-foot { display: flex; gap: 8px; padding: 12px; border-top: 1px solid #ececec; }
+  #fcf-input { flex: 1; border: 1px solid #d8d8d4; border-radius: 12px;
+    padding: 10px 12px; font-size: 14px; resize: none; outline: none; }
+  #fcf-input:focus { border-color: #15161A; }
+  #fcf-send { border: none; background: #15161A; color: #C8F135; border-radius: 12px;
+    padding: 0 16px; font-weight: 600; cursor: pointer; }
+  #fcf-send:disabled { opacity: .5; cursor: default; }
+</style>
+
+<div id="fcf-chat">
+  <div id="fcf-panel">
+    <div id="fcf-head">
+      <h3>First Class Fitness</h3>
+      <p>Stel je vraag — we helpen je in een paar minuten op weg.</p>
+    </div>
+    <div id="fcf-msgs"></div>
+    <div id="fcf-foot">
+      <textarea id="fcf-input" rows="1" placeholder="Typ je bericht…"></textarea>
+      <button id="fcf-send">Stuur</button>
+    </div>
+  </div>
+  <button id="fcf-toggle" aria-label="Open chat">💬</button>
+</div>
+
+<script>
+(function () {
+  // >>> Vervang dit door het adres van je eigen serverless functie <<<
+  const BACKEND_URL = "https://JOUW-PROJECT.vercel.app/api/chat";
+
+  const panel = document.getElementById("fcf-panel");
+  const msgs  = document.getElementById("fcf-msgs");
+  const input = document.getElementById("fcf-input");
+  const send  = document.getElementById("fcf-send");
+
+  // De gespreksgeschiedenis die we naar de backend sturen.
+  const history = [];
+  let started = false;
+
+  document.getElementById("fcf-toggle").onclick = function () {
+    panel.classList.toggle("open");
+    if (panel.classList.contains("open") && !started) {
+      started = true;
+      addBubble("bot", "Hoi! Waar wil je graag mee aan de slag — afvallen, fitter worden, kracht opbouwen, of iets anders?");
+    }
+  };
+
+  function addBubble(who, text) {
+    const div = document.createElement("div");
+    div.className = "fcf-msg " + (who === "user" ? "fcf-user" : "fcf-bot");
+    div.textContent = text;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  async function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+    addBubble("user", text);
+    history.push({ role: "user", content: text });
+    input.value = "";
+    send.disabled = true;
+
+    const thinking = addBubble("bot", "…");
+
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: history }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "Sorry, er ging even iets mis. Probeer het zo nog eens.";
+      thinking.textContent = reply;
+      history.push({ role: "assistant", content: reply });
+    } catch (e) {
+      thinking.textContent = "Sorry, ik kan even niet antwoorden. Probeer het later opnieuw.";
+    } finally {
+      send.disabled = false;
+      input.focus();
+    }
+  }
+
+  send.onclick = sendMessage;
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+})();
+</script>
