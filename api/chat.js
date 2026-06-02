@@ -35,6 +35,14 @@ BELANGRIJKE GRENZEN:
 Als je genoeg weet, sluit je af met een korte, gestructureerde samenvatting
 voor het team (doel, situatie, aandachtspunten, contactgegevens) en de mededeling
 dat een trainer binnen één werkdag contact opneemt voor een gratis proefles.
+
+Schrijf altijd in gewone, lopende tekst. Gebruik geen opmaaktekens zoals
+sterretjes (**) of koppen.
+
+Zodra je deze afsluitende samenvatting hebt gegeven en het gesprek is afgerond,
+zet je als allerlaatste regel, en verder niets, exact dit:
+[[INTAKE_COMPLEET]]
+Doe dit alleen één keer, precies bij de afronding.
 `.trim();
 
 // --- De afhandeling van een binnenkomend bericht --------------------------
